@@ -20,7 +20,7 @@ interface SignupCredentials {
 }
 
 async function signupUser(credentials: SignupCredentials) {
-	return fetch(`http://localhost:3005/api/users`, {
+	return fetch(`/api/user/signup`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
@@ -28,6 +28,7 @@ async function signupUser(credentials: SignupCredentials) {
 		body: JSON.stringify(credentials)
 	})
 		.then((res) => {
+			console.log("RESS")
 			console.log(res);
 			if (res.ok) return res.json();
 			throw new Error(res.statusText);
@@ -53,6 +54,7 @@ export function LoginModal({ setToken, modalOpen, onModalClose }: Props) {
 	const handleLogin: MouseEventHandler<HTMLButtonElement> = async (e) => {
 		e.preventDefault();
 		const res = await signIn("credentials", { redirect: false, email, password  });
+		console.log(res);
 		if (!res?.ok) {
 			throw new Error(res?.error ?? "No response received from server.");
 		}
@@ -60,7 +62,7 @@ export function LoginModal({ setToken, modalOpen, onModalClose }: Props) {
 		setPassword('');
 		// if (token) {
 			// console.log(email, password);
-			clearModal();
+			// clearModal();
 			// props.setToken({ token: token });
 			sessionStorage.removeItem('likes');
 			sessionStorage.removeItem('dislikes');
@@ -106,7 +108,7 @@ export function LoginModal({ setToken, modalOpen, onModalClose }: Props) {
 				sessionStorage.removeItem('likes');
 				sessionStorage.removeItem('dislikes');
 
-				// const res = await signIn("credentials", { redirect: false, email, password });
+				const res = await signIn("credentials", { redirect: false, email, password });
 
 				// console.log(res);
 				// console.log(session);
@@ -124,7 +126,7 @@ export function LoginModal({ setToken, modalOpen, onModalClose }: Props) {
 
 	const clearModal = () => {
 		setConfirmText('');
-		onModalClose();
+		// onModalClose();
 	};
 
 	// const isLogin = props.isLogin;

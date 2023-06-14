@@ -1,7 +1,9 @@
 import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
+import type { User } from "@/lib/typedefs";
+import { AuthOptions } from "next-auth";
 
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
     providers: [
         CredentialsProvider({
             name: "credentials",
@@ -15,7 +17,7 @@ const handler = NextAuth({
                     password: credentials?.password
                 }
                 const res = 
-                    await fetch(`http://localhost:3005/api/users/login`, {
+                    await fetch(`/api/users/signup`, {
                         method: 'POST',
                         headers: {
                             "Content-Type": "application/json"
@@ -23,8 +25,10 @@ const handler = NextAuth({
                         body: JSON.stringify(payload)
                     });
 
-                const user = await res.json();
+                const user: User = await res.json();
+                console.log(res.ok);
                 console.log("user: ", user);
+                if (res.status === 401) throw new Error("Invalid username or password.");
                 if (!res.ok) {
                     throw new Error(user.error);
                 }
@@ -59,6 +63,8 @@ const handler = NextAuth({
             return session;
         }
     }
-});
+}
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST }
