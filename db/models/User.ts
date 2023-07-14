@@ -40,7 +40,6 @@ User.init({
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
         validate: {
             isEmail: true
         }
@@ -66,6 +65,9 @@ User.init({
             updatedUser.password = hashSync(updatedUser.password, 5);
         }
     },
+    indexes: [
+        { fields: ["email"], name: "UQ_Email", unique: true }
+    ],
     sequelize: connection,
     freezeTableName: true,
     underscored: true,

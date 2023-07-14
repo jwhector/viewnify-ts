@@ -2,21 +2,24 @@ import Hammer from "hammerjs";
 import { ReactNode, useCallback, useEffect, useRef } from "react";
 
 interface Props {
+    canSwipe?: boolean;
     onExitLeft?: () => void;
     onExitRight?: () => void;
+    onSwipe?: ({ deltaX, deltaY, rotate }: { deltaX: number, deltaY: number, rotate: number }) => void;
     children: any;
 }
 
-export default function Swipeable({ onExitLeft, onExitRight, children }: Props) {
+function Swipeable({ canSwipe = true, onExitLeft, onExitRight, onSwipe, children }: Props) {
     const swipeableRef = useRef<HTMLDivElement>(null);
+    const hammertimeRef = useRef<HammerManager | null>(null);
 
     
     const addSwipe = useCallback(() => {
-        if (!swipeableRef.current) {
+        if (!hammertimeRef.current || !canSwipe) {
             return;
         }
         
-        let hammertime = new Hammer(swipeableRef.current, { recognizers: [[Hammer.Tap], [Hammer.Pan]] })
+        const hammertime = hammertimeRef.current;
         
         hammertime.on("pan", (e) => {
             if (e.deltaX === 0) return;
@@ -39,6 +42,8 @@ export default function Swipeable({ onExitLeft, onExitRight, children }: Props) 
             'px) rotate(' +
             rotate +
             'deg)';
+
+            if (onSwipe) onSwipe({ deltaX: e.deltaX, deltaY: e.deltaY, rotate: rotate });
         });
         
         hammertime.on("panend", (e) => {
@@ -47,9 +52,11 @@ export default function Swipeable({ onExitLeft, onExitRight, children }: Props) 
             swipeableRef.current.style.removeProperty("transition");
             const moveOutWidth = document.body.clientWidth;
             const keep = Math.abs(e.deltaX) < 80 || Math.abs(e.velocityX) < 0.5;
+
             
             if (keep) {
                 swipeableRef.current.style.transform = "";
+                if (onSwipe) onSwipe({ deltaX: 0, deltaY: 0, rotate: 0 });
             } else {
                 const endX = Math.max(
                     Math.abs(e.velocityX) * moveOutWidth,
@@ -72,7 +79,9 @@ export default function Swipeable({ onExitLeft, onExitRight, children }: Props) 
                     'px) rotate(' +
                     rotate +
                     'deg)';
-                
+                    
+                    if (onSwipe) onSwipe({ deltaX: endX, deltaY: endY, rotate: 0 });
+                    
                     swipeableRef.current.addEventListener("transitionend", () => {
                         if (e.deltaX > 0 && onExitRight) {
                             onExitRight();
@@ -81,21 +90,29 @@ export default function Swipeable({ onExitLeft, onExitRight, children }: Props) 
                         }
                         setTimeout(() => {
                             if (swipeableRef.current) {
-                            swipeableRef.current.style.transform = "";
-                            swipeableRef.current.style.transition = "none";
-                        }
-                        else throw new Error("No ref found for card");
+                                swipeableRef.current.style.transform = "";
+                                swipeableRef.current.style.transition = "none";
+                            }
+                            else throw new Error("No ref found for card");
                         }, 200);
                         
-                }, { once: true });
+                    }, { once: true });
             }
             swipeableRef.current.style.removeProperty("cursor");
         });
         
         return () => {
-            hammertime.off("pan");
+            hammertime.off("pan panend");
         };
-    }, [onExitLeft, onExitRight]);
+    }, [onExitLeft, onExitRight, canSwipe, onSwipe]);
+
+    useEffect(() => {
+        if (swipeableRef.current) {
+            hammertimeRef.current = new Hammer(swipeableRef.current, { recognizers: [[Hammer.Tap], [Hammer.Pan]] });
+        } else {
+            throw new Error("No ref found for swipeable");
+        }
+    }, []);
     
     useEffect(() => {
         const removeSwipe = addSwipe();
@@ -108,3 +125,5 @@ export default function Swipeable({ onExitLeft, onExitRight, children }: Props) 
         </div>
     );
 }
+
+export default Swipeable;

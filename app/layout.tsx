@@ -15,8 +15,6 @@ function RootLayout({
       <body>
           {children}
       </body>
-      <script>
-      </script>
     </html>
   )
 }
