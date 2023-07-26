@@ -2,21 +2,26 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/db/models";
-import { Like } from "@/types/typedefs";
+import { Like, LocalLike, tmdbEntry } from "@/types/typedefs";
 import type { tmdbResponse } from "@/types/typedefs";
 
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
         const body = await req.json();
+
         
         if (!body.format || !body.curPg) {
             return NextResponse.json({ message: "Body missing format and/or curPg" }, { status: 401 });
         }
-    
+        
         if (!session || !session.user) {
             const entries = await tmdbSearch({ format: body.format, genres: body.genres ?? "", streamingServices: body.services ?? "", curPg: body.curPg });
-            return NextResponse.json(entries);
+            const likes = body.likes ?? [];
+            const dislikes = body.dislikes ?? [];
+            console.log(likes);
+            const filteredEntries = filterEntries(entries, [...likes, ...dislikes]);
+            return NextResponse.json({ ...entries, results: filteredEntries });
         }
 
         const userData = await db.User.findOne({
@@ -35,7 +40,7 @@ export async function POST(req: NextRequest) {
 
         const filteredEntries = filterEntries(entries, userData.likes?.map(like => like.dataValues) || []);
         
-        return NextResponse.json(filteredEntries);
+        return NextResponse.json({ ...entries, results: filteredEntries });
     } catch (err) {
         console.error(err);
         return new NextResponse(null, { status: 500 });
@@ -65,8 +70,11 @@ async function tmdbSearch({ format, genres, streamingServices, curPg }: SearchPr
     return response.json();
 }
 
-function filterEntries(entries: tmdbResponse, likes: Like[]) {
+function filterEntries(entries: tmdbResponse, likes: Like[] | LocalLike[]) {
     const likesSet = new Set(likes.map((like) => parseInt(like.tmdbId)));
+
+    console.log(likes, likesSet);
+    
 
     const tmdbFiltered = [...(entries.results)].filter((tmdbResult) => !likesSet.has(tmdbResult.id) && tmdbResult.poster_path && tmdbResult.backdrop_path);
 

@@ -1,7 +1,3 @@
 export default function MediaCard() {
-    return (
-        <div>
-            
-        </div>
-    );
+  return <div></div>;
 }

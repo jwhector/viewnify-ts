@@ -7,6 +7,10 @@ export type User = {
     error?: string;
 }
 
+export interface LocalLike {
+    tmdbId: string;
+}
+
 export interface Like {
     id: number;
     tmdbId: string;
@@ -14,7 +18,9 @@ export interface Like {
 }
 
 export interface tmdbResponse {
-    pages: number;
+    page: number;
+    total_pages: number;
+    total_results: number;
     results: tmdbEntry[];
 }
 

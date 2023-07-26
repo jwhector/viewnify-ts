@@ -18,3 +18,13 @@ export const genreMap = {
 	10752: 'War',
 	37: 'Western'
 };
+
+export const streamingServicesMap: Record<string, number> = {
+	"Netflix": 8,
+	"Amazon Prime Video": 9,
+	"Disney Plus": 337
+}
+
+export function getImagePath(slug: string, size: "original" | "w500") {
+    return `https://image.tmdb.org/t/p/${size}${slug}`;
+}
